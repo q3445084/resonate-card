@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>回响 · 今日回响卡</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  min-height:100vh;
+  background:radial-gradient(120% 70% at 50% -10%,#FDF9F1 0%,#F2EADC 55%,#E9DFCE 100%);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  color:#2B2620;
+  display:flex;flex-direction:column;align-items:center;
+  padding:26px 16px 36px;
+}
+.brand{display:flex;align-items:baseline;gap:8px;margin-bottom:16px}
+.brand .cn{font-size:20px;font-weight:800;letter-spacing:4px}
+.brand .en{font-size:10px;letter-spacing:3px;color:#9A8E7C;font-weight:600}
+.filters{
+  display:flex;gap:8px;overflow-x:auto;max-width:min(92vw,420px);
+  padding:4px 2px 12px;margin-bottom:6px;scrollbar-width:none;
+}
+.filters::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;border:1px solid #E0D5C3;background:rgba(255,255,255,.55);
+  color:#7A6E5E;font-size:12.5px;padding:7px 13px;border-radius:999px;
+  font-family:inherit;cursor:pointer;transition:.2s;white-space:nowrap;
+}
+.chip.active{background:#2B2620;border-color:#2B2620;color:#FBF7EF;font-weight:600}
+.card{
+  --series:#A07A3C;
+  position:relative;width:min(92vw,420px);aspect-ratio:4/5;
+  background:linear-gradient(160deg,#FFFDF8 0%,#FBF7EF 58%,#F5EFE3 100%);
+  border-radius:28px;padding:26px 26px 22px;
+  display:flex;flex-direction:column;
+  box-shadow:0 26px 60px -26px rgba(90,68,34,.42),0 0 0 1px rgba(120,100,70,.07);
+  overflow:hidden;
+}
+.card::after{
+  content:"";position:absolute;inset:11px;border:1px solid rgba(160,140,105,.22);
+  border-radius:20px;pointer-events:none;
+}
+.card.pop{animation:pop .5s cubic-bezier(.2,.85,.3,1)}
+@keyframes pop{
+  0%{transform:scale(.955) rotate(-1.2deg);opacity:.35}
+  55%{transform:scale(1.015) rotate(.5deg);opacity:1}
+  100%{transform:scale(1) rotate(0)}
+}
+.card-head{display:flex;justify-content:space-between;align-items:baseline;padding:2px 6px 0}
+.logo{font-size:13px;font-weight:800;letter-spacing:2px}
+.logo small{font-size:8px;letter-spacing:1.6px;color:#9A8E7C;margin-left:4px;font-weight:600}
+.no{font-size:10px;letter-spacing:1.4px;color:#A99D8B;font-weight:600}
+.card-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 6px}
+.series{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11px;letter-spacing:2px;color:var(--series);font-weight:700;
+  margin-bottom:16px;
+}
+.series::before{
+  content:"";width:6px;height:6px;border-radius:50%;background:var(--series);
+  box-shadow:0 0 0 3px rgba(0,0,0,.05);
+}
+.quote{font-size:clamp(24px,7.1vw,32px);line-height:1.62;font-weight:650;letter-spacing:.5px;margin:0}
+.quote.mid{font-size:clamp(22px,6.4vw,28px)}
+.quote.long{font-size:clamp(19px,5.6vw,24px)}
+.action-wrap{
+  margin-top:26px;display:flex;gap:8px;align-items:flex-start;
+  font-size:12.5px;line-height:1.7;color:#8C8070;
+}
+.action-tag{
+  flex:0 0 auto;font-size:10px;letter-spacing:1px;color:var(--series);
+  border:1px solid var(--series);opacity:.9;
+  border-radius:5px;padding:1px 6px;margin-top:3px;font-weight:700;
+}
+.card-foot{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 6px 0;border-top:1px solid rgba(160,140,105,.22);
+  font-size:10.5px;letter-spacing:1.2px;color:#A99D8B;
+}
+.slogan{font-weight:700;color:#7A6E5E}
+.actions{display:flex;gap:10px;margin-top:22px;width:min(92vw,420px)}
+button.btn{
+  flex:1;border:none;border-radius:16px;padding:16px 10px;font-size:14.5px;
+  font-family:inherit;font-weight:700;letter-spacing:1px;cursor:pointer;transition:.18s;
+}
+button.btn:active{transform:scale(.975)}
+.btn-primary{
+  background:linear-gradient(135deg,#F07A3C,#E0542A);color:#fff;
+  box-shadow:0 12px 26px -10px rgba(224,84,42,.7);
+}
+.btn-ghost{flex:0 0 108px;background:rgba(255,255,255,.6);color:#6E6353;border:1px solid #E0D5C3}
+.tip{margin-top:18px;font-size:11px;letter-spacing:1px;color:#A99D8B;text-align:center;line-height:1.8}
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <span class="cn">回响</span>
+  <span class="en">RESONATE</span>
+</div>
+
+<div class="filters" id="filters"></div>
+
+<div class="card" id="card">
+  <div class="card-head">
+    <div class="logo">回响<small>RESONATE</small></div>
+    <div class="no" id="cardNo">No.001</div>
+  </div>
+  <div class="card-body">
+    <div class="series" id="cardSeries">日常回响</div>
+    <p class="quote" id="cardQuote">今天不用完美，先开始就行。</p >
+    <div class="action-wrap">
+      <span class="action-tag">试试</span>
+      <span id="cardAction">喝一口水，再打开第一个任务。</span>
+    </div>
+  </div>
+  <div class="card-foot">
+    <span class="slogan">碰一下，有回响。</span>
+    <span id="cardDate">2026.10.24</span>
+  </div>
+</div>
+
+<div class="actions">
+  <button class="btn btn-primary" id="drawBtn">碰一下，抽一句</button>
+  <button class="btn btn-ghost" id="saveBtn">保存卡片</button>
+</div>
+
+<div class="tip">每句为你定制，把好话放在手边</div>
+
+<script>
+/* ---------------- 数据 ---------------- */
+const SERIES = {
+  morning:{name:'早起回响',color:'#E8622C'},
+  work:{name:'加班回响',color:'#3A5A8C'},
+  exam:{name:'考试回响',color:'#4C8C5A'},
+  gift:{name:'礼物回响',color:'#C94F7C'},
+  low:{name:'低谷回响',color:'#6B5AA6'},
+  daily:{name:'日常回响',color:'#A07A3C'}
+};
+
+const CARDS = [
+  // 早起
+  {s:'morning',q:'今天不用完美，先开始就行。',a:'喝一口水，再打开第一个任务。'},
+  {s:'morning',q:'早晨的第一口气，是你的。',a:'拉开窗帘，站 30 秒。'},
+  {s:'morning',q:'你不是没睡醒，你是在加载。',a:'伸个懒腰，等进度条走完。'},
+  {s:'morning',q:'今天的光，会照到你身上。',a:'走到有光的地方站一会儿。'},
+  {s:'morning',q:'先照顾好今天，明天会自己来。',a:'吃一口热的东西。'},
+  {s:'morning',q:'你不需要一醒来就准备好。',a:'允许自己慢十分钟。'},
+
+  // 加班
+  {s:'work',q:'你已经在往前走了，慢一点也算。',a:'放下手机 30 秒，活动一下脖子。'},
+  {s:'work',q:'今天没做完的，明天还是你的。',a:'关掉一个不必要的窗口。'},
+  {s:'work',q:'累了就停一下，地球不会因此停转。',a:'去接一杯水。'},
+  {s:'work',q:'不是所有努力都要被看见。',a:'给自己一个无声的赞。'},
+  {s:'work',q:'你比自己想象的更扛事。',a:'回想一次你挺过来的经历。'},
+  {s:'work',q:'先做完一件，再做下一件。',a:'把待办清单删掉一项。'},
+
+  // 考试
+  {s:'exam',q:'不会的题会过去，你会留下来。',a:'深呼吸三次。'},
+  {s:'exam',q:'你背过的每一个字，都在替你排队。',a:'合上书，回想一个知识点。'},
+  {s:'exam',q:'先做会做的，剩下的再说。',a:'圈出最简单的那道题。'},
+  {s:'exam',q:'你已经比昨天多知道一点了。',a:'写下一个今天记住的词。'},
+  {s:'exam',q:'分数会过去，你会长大。',a:'抬头看看远处，放松眼睛。'},
+
+  // 礼物
+  {s:'gift',q:'这句话，替我在你手边陪你。',a:'把杯垫放在对方常坐的位置。'},
+  {s:'gift',q:'有人惦记你，这件事是真的。',a:'给那个人回一条消息。'},
+  {s:'gift',q:'你值得被好好对待。',a:'收下这份心意，别客气。'},
+  {s:'gift',q:'有人爱你，只是没说出口。',a:'想想最近谁对你笑过。'},
+  {s:'gift',q:'今天也请把好话留一句给自己。',a:'对镜子里的自己点个头。'},
+  {s:'gift',q:'你值得一个不赶时间的下午。',a:'发 5 分钟呆。'},
+
+  // 低谷
+  {s:'low',q:'先喝口水，今天还有下半场。',a:'放下手机 30 秒，喝一口水。'},
+  {s:'low',q:'情绪会过去，你不会。',a:'写下此刻的一个感受。'},
+  {s:'low',q:'不用马上好起来，先待一会儿。',a:'找个舒服的姿势坐 1 分钟。'},
+  {s:'low',q:'累了不是错，是提醒。',a:'闭眼休息 60 秒。'},
+  {s:'low',q:'你不需要一直有答案。',a:'允许自己说一句“不知道”。'},
+  {s:'low',q:'慢慢来，比较快。',a:'把待办清单删掉一项。'},
+
+  // 日常
+  {s:'daily',q:'你已经做得比你以为的多。',a:'数三件今天完成的小事。'},
+  {s:'daily',q:'世界很大，你的位置也在。',a:'看看窗外，找到一片天。'},
+  {s:'daily',q:'你正在成为更完整的自己。',a:'写下一个今天学会的小事。'},
+  {s:'daily',q:'别急，花有花期，你有你的。',a:'给桌上的植物浇点水。'},
+  {s:'daily',q:'今天允许自己少做一点。',a:'取消一个不必要的安排。'},
+  {s:'daily',q:'你的努力有回响，只是还没到耳朵里。',a:'坚持做一件小事 5 分钟。'},
+  {s:'daily',q:'今天也有一句好话在等你。',a:'再碰一次杯垫。'}
+];
+
+/* ---------------- 状态 ---------------- */
+let currentSeries = 'all';
+let lastCard = null;
+let locked = false;
+
+const cardEl   = document.getElementById('card');
+const quoteEl  = document.getElementById('cardQuote');
+const actionEl = document.getElementById('cardAction');
+const seriesEl = document.getElementById('cardSeries');
+const noEl     = document.getElementById('cardNo');
+const dateEl   = document.getElementById('cardDate');
+
+/* ---------------- 工具 ---------------- */
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + '.' +
+    String(d.getMonth()+1).padStart(2,'0') + '.' +
+    String(d.getDate()).padStart(2,'0');
+}
+
+function pickCard(){
+  const pool = currentSeries === 'all'
+    ? CARDS
+    : CARDS.filter(c => c.s === currentSeries);
+  let i = Math.floor(Math.random() * pool.length);
+  if (pool.length > 1 && pool[i] === lastCard) i = (i + 1) % pool.length;
+  return pool[i];
+}
+
+function render(card, animate){
+  lastCard = card;
+  const s = SERIES[card.s];
+  const idx = CARDS.indexOf(card) + 1;
+
+  cardEl.style.setProperty('--series', s.color);
+  seriesEl.textContent = s.name;
+  noEl.textContent = 'No.' + String(idx).padStart(3,'0');
+  quoteEl.textContent = card.q;
+  quoteEl.className = 'quote' +
+    (card.q.length > 20 ? ' long' : card.q.length > 14 ? ' mid' : '');
+  actionEl.textContent = card.a;
+  dateEl.textContent = todayStr();
+
+  if (animate){
+    cardEl.classList.remove('pop');
+    void cardEl.offsetWidth;
+    cardEl.classList.add('pop');
+  }
+}
+
+/* ---------------- 筛选器 ---------------- */
+const filtersEl = document.getElementById('filters');
+['all', ...Object.keys(SERIES)].forEach(key => {
+  const b = document.createElement('button');
+  b.className = 'chip' + (key === 'all' ? ' active' : '');
+  b.textContent = key === 'all' ? '全部' : SERIES[key].name;
+  b.addEventListener('click', () => {
+    currentSeries = key;
+    [...filtersEl.children].forEach(c => c.classList.toggle('active', c === b));
+    render(pickCard(), true);
+  });
+  filtersEl.appendChild(b);
+});
+
+/* ---------------- 抽卡 ---------------- */
+document.getElementById('drawBtn').addEventListener('click', () => {
+  if (locked) return;
+  locked = true;
+  render(pickCard(), true);
+  if (navigator.vibrate) navigator.vibrate(12);
+  setTimeout(() => locked = false, 320);
+});
+
+/* ---------------- 保存卡片 ---------------- */
+const FONT = '"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,sans-serif';
+
+function measureSpaced(ctx, text, spacing){
+  let w = 0;
+  for (const ch of text) w += ctx.measureText(ch).width + spacing;
+  return Math.max(0, w - spacing);
+}
+function drawSpaced(ctx, text, x, y, spacing){
+  let cur = x;
+  for (const ch of text){
+    ctx.fillText(ch, cur, y);
+    cur += ctx.measureText(ch).width + spacing;
+  }
+  return cur - spacing;
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function wrapText(ctx, text, maxWidth){
+  const lines = [];
+  let line = '';
+  for (const ch of text){
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line){
+      lines.push(line);
+      line = ch;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function saveCard(){
+  const card = lastCard;
+  if (!card) return;
+
+  const s = SERIES[card.s];
+  const W = 1080, H = 1350, PAD = 104;
+  const cvs = document.createElement('canvas');
+  cvs.width = W; cvs.height = H;
+  const ctx = cvs.getContext('2d');
+  const noStr = 'No.' + String(CARDS.indexOf(card) + 1).padStart(3,'0');
+
+  // 背景
+  const g = ctx.createLinearGradient(0, 0, W * .6, H);
+  g.addColorStop(0, '#FFFDF8');
+  g.addColorStop(.58, '#FBF7EF');
+  g.addColorStop(1, '#F5EFE3');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // 内框
+  ctx.strokeStyle = 'rgba(160,140,105,.28)';
+  ctx.lineWidth = 2;
+  roundRect(ctx, 44, 44, W - 88, H - 88, 44);
+  ctx.stroke();
+
+  // 顶部品牌
+  ctx.fillStyle = '#2B2620';
+  ctx.font = '800 34px ' + FONT;
+  const lw = drawSpaced(ctx, '回响', PAD, 150, 6);
+  ctx.fillStyle = '#9A8E7C';
+  ctx.font = '600 17px ' + FONT;
+  drawSpaced(ctx, 'RESONATE', lw + 16, 150, 3.5);
+
+  // 编号
+  ctx.fillStyle = '#A99D8B';
+  ctx.font = '600 22px ' + FONT;
+  const nw = measureSpaced(ctx, noStr, 3);
+  drawSpaced(ctx, noStr, W - PAD - nw, 150, 3);
+
+  // 系列
+  ctx.fillStyle = s.color;
+  ctx.beginPath();
+  ctx.arc(PAD + 7, 224, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = '700 24px ' + FONT;
+  drawSpaced(ctx, s.name, PAD + 28, 233, 4);
+
+  // 主文案
+  const qlen = card.q.length;
+  const qSize = qlen > 20 ? 52 : qlen > 14 ? 60 : 68;
+  const qLH = qSize * 1.62;
+  ctx.font = '600 ' + qSize + 'px ' + FONT;
+  ctx.fillStyle = '#2B2620';
+  const lines = wrapText(ctx, card.q, W - PAD * 2);
+  const blockH = lines.length * qLH;
+  const startY = 620 - blockH / 2 + qSize * 0.82;
+  lines.forEach((ln, i) => {
+    drawSpaced(ctx, ln, PAD, startY + i * qLH, 1);
+  });
+
+  // 微行动
+  const aY = startY + blockH + qSize * 0.4 + 52;
+  ctx.font = '700 19px ' + FONT;
+  ctx.fillStyle = s.color;
+  drawSpaced(ctx, '试试', PAD, aY, 3);
+  ctx.font = '400 26px ' + FONT;
+  ctx.fillStyle = '#8C8070';
+  drawSpaced(ctx, card.a, PAD + 62, aY, 1);
+
+  // 分割线
+  ctx.strokeStyle = 'rgba(160,140,105,.28)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(PAD, 1180);
+  ctx.lineTo(W - PAD, 1180);
+  ctx.stroke();
+
+  // 底部
+  ctx.fillStyle = '#7A6E5E';
+  ctx.font = '700 24px ' + FONT;
+  drawSpaced(ctx, '碰一下，有回响。', PAD, 1240, 3);
+
+  ctx.fillStyle = '#A99D8B';
+  ctx.font = '600 20px ' + FONT;
+  const d = todayStr();
+  const dw = measureSpaced(ctx, d, 2);
+  drawSpaced(ctx, d, W - PAD - dw, 1240, 2);
+
+  // 下载
+  const a = document.createElement('a');
+  a.download = '回响卡_' + noStr.replace('.', '') + '.png';
+  a.href = cvs.toDataURL('image/png');
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  toast('回响卡已保存');
+}
+
+/* ---------------- 轻提示 ---------------- */
+let toastTimer;
+function toast(msg){
+  let el = document.getElementById('toast');
+  if (!el){
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.style.cssText = 'position:fixed;left:50%;bottom:36px;transform:translateX(-50%) translateY(12px);' +
+      'background:rgba(43,38,32,.92);color:#FBF7EF;font-size:13px;letter-spacing:1px;' +
+      'padding:11px 20px;border-radius:999px;opacity:0;transition:.28s;pointer-events:none;' +
+      'z-index:99;font-family:inherit;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  requestAnimationFrame(() => {
+    el.style.opacity = '1';
+    el.style.transform = 'translateX(-50%) translateY(0)';
+  });
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(12px)';
+  }, 1800);
+}
+
+document.getElementById('saveBtn').addEventListener('click', saveCard);
+
+/* ---------------- 初始化 ---------------- */
+render(pickCard(), false);
+</script>
+</body>
+</html>
